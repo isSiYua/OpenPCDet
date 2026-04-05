@@ -97,10 +97,44 @@ def main():
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
 
-            V.draw_scenes(
-                points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-            )
+            print("\n========== 🎉 恭喜！模型检测结果 🎉 ==========")
+            print("预测框的 3D 坐标和尺寸 (x, y, z, dx, dy, dz, angle): \n", pred_dicts[0]['pred_boxes'])
+            print("预测分数 (置信度): \n", pred_dicts[0]['pred_scores'])
+            print("预测类别 (1代表车, 2代表行人等): \n", pred_dicts[0]['pred_labels'])
+            print("================================================\n")
+            
+            
+            # --- 新增的 JSON 导出代码 ---
+            import json
+            
+            # 1. 提取点云 (去掉第一列的 batch_index)
+            points = data_dict['points'][:, 1:].cpu().numpy().tolist()
+            # 2. 提取预测框、分数和类别标签
+            pred_boxes = pred_dicts[0]['pred_boxes'].cpu().numpy().tolist()
+            pred_scores = pred_dicts[0]['pred_scores'].cpu().numpy().tolist()
+            pred_labels = pred_dicts[0]['pred_labels'].cpu().numpy().tolist()
+
+            # 3. 打包成字典
+            save_dict = {
+                'points': points,
+                'pred_boxes': pred_boxes,
+                'pred_scores': pred_scores,
+                'pred_labels': pred_labels
+            }
+
+            # 4. 写入 JSON 文件
+            with open('kitti_result.json', 'w') as f:
+                json.dump(save_dict, f)
+                
+            print("\n✅ 成功！预测结果已保存至 tools/kitti_result.json")
+            # ---------------------------
+
+            # 确保原本画图的代码 V.draw_scenes(...) 仍然是被注释掉的
+            
+            # V.draw_scenes(
+            #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+            #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+            # )
 
             if not OPEN3D_FLAG:
                 mlab.show(stop=True)

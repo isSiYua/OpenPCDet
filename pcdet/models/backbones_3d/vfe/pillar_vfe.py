@@ -25,6 +25,18 @@ class PFNLayer(nn.Module):
             self.linear = nn.Linear(in_channels, out_channels, bias=True)
 
         self.part = 50000
+        
+        # ==========================================
+        # ✨ NEW: Pillar-SE (Squeeze-and-Excitation) Block
+        # 作用: 学习通道间的注意力权重
+        # ==========================================
+        reduced_channels = max(1, out_channels // 4)
+        self.se_block = nn.Sequential(
+            nn.Linear(out_channels, reduced_channels, bias=False),
+            nn.SiLU(), # 这里也用 SiLU 保持一致
+            nn.Linear(reduced_channels, out_channels, bias=False),
+            nn.Sigmoid() # 用 Sigmoid 输出 0~1 的注意力权重
+        )
 
     def forward(self, inputs):
         if inputs.shape[0] > self.part:
@@ -38,7 +50,21 @@ class PFNLayer(nn.Module):
         torch.backends.cudnn.enabled = False
         x = self.norm(x.permute(0, 2, 1)).permute(0, 2, 1) if self.use_norm else x
         torch.backends.cudnn.enabled = True
-        x = F.relu(x)
+        x = F.silu(x)
+        
+        # ==========================================
+        # ✨ NEW: Apply Attention Mechanism
+        # ==========================================
+        # Step A: Squeeze (提取柱内全局特征)
+        x_global = torch.max(x, dim=1, keepdim=True)[0] # shape: (M, 1, C)
+
+        # Step B: Excite (通过 MLP 生成注意力掩码)
+        se_weights = self.se_block(x_global) # shape: (M, 1, C)
+
+        # Step C: Reweight (将注意力权重乘回原始特征)
+        x = x * se_weights # shape: (M, N, C)
+        # ==========================================
+        
         x_max = torch.max(x, dim=1, keepdim=True)[0]
 
         if self.last_vfe:
