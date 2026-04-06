@@ -198,27 +198,30 @@ class AnchorHeadTemplate(nn.Module):
         
         
         # ==========================================
-        # ✨ 新增：融合 3D DIoU 辅助几何损失
+        # ✨ 修复版：融合 3D DIoU 辅助几何损失
         # ==========================================
         if self.model_cfg.LOSS_CONFIG.get('USE_DIOU', False):
-            # 1. 实例化现有的 DIoU 计算器 (复用 loss_utils 中的现有代码)
             diou_calculator = loss_utils.IouRegLossSparse(type="DIoU")
             
-            # 2. 将网络输出的残差(encoded)解码为真实的3D包围盒坐标(decoded)
             decoded_box_preds = self.box_coder.decode_torch(box_preds, anchors)
             decoded_box_targets = self.box_coder.decode_torch(box_reg_targets, anchors)
             
-            # 3. 提取所有的正样本 (只计算确实有物体的 Anchor 之间的 IoU)
             pos_decoded_preds = decoded_box_preds[positives]
             pos_decoded_targets = decoded_box_targets[positives]
             
-            # 4. 计算 DIoU Loss
             if pos_decoded_preds.shape[0] > 0:
                 iou = diou_calculator.bbox3d_iou_func(pos_decoded_preds, pos_decoded_targets)
-                diou_loss = (1.0 - iou).sum() / batch_size
-                diou_weight = self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS.get('diou_weight', 1.0)
                 
-                # 5. 累加到总回归损失 box_loss 中，并存入 TensorBoard 字典
+                # 💥 核心修复：提取属于正样本的权重（该权重已经被 pos_normalizer 归一化过）
+                # reg_weights 的 shape 是 [batch_size, num_anchors]
+                # positives 是 bool mask, 过滤后 pos_weights 的 shape 刚好匹配 iou 的长度
+                pos_weights = reg_weights[positives] 
+                
+                # 💥 核心修复：将权重乘上去，保证 DIoU 和 L1 处于同一量级
+                diou_loss = ((1.0 - iou) * pos_weights).sum() / batch_size
+                
+                diou_weight = self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS.get('diou_weight', 0.1)
+                
                 box_loss += diou_loss * diou_weight
                 tb_dict['rpn_loss_diou'] = diou_loss.item()
         # ==========================================
