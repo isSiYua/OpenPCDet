@@ -126,13 +126,24 @@ MODEL:
         #         'dir_weight': 0.2,
         #         'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         #     }
+        # LOSS_CONFIG:
+        #     USE_DIOU: True  # ✨ 新增：开启 DIoU 辅助几何损失
+        #     LOSS_WEIGHTS: {
+        #         'cls_weight': 1.0,
+        #         'loc_weight': 2.0,
+        #         'dir_weight': 0.2,
+        #         'diou_weight': 0.2,  # ✨ 新增：DIoU 的权重（建议从 0.2 开始实验）
+        #         'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        #     }
+        
         LOSS_CONFIG:
-            USE_DIOU: True  # ✨ 新增：开启 DIoU 辅助几何损失
+            USE_DIOU: True
             LOSS_WEIGHTS: {
                 'cls_weight': 1.0,
                 'loc_weight': 2.0,
-                'dir_weight': 0.2,
-                'diou_weight': 0.2,  # ✨ 新增：DIoU 的权重（建议从 0.2 开始实验）
+                'dir_weight': 0.2,   # 保持全局统一权重，避免梯度冲突
+                # ✨ 修改：解耦 DIoU 权重 [Car, Pedestrian, Cyclist]
+                'diou_weight': [0.05, 0.2, 0.05], 
                 'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
             }
 
