@@ -2,11 +2,15 @@ from pathlib import Path
 from collections import Counter
 
 GT_DIR = Path("/home/cv10f26/Group10/Datasets/data/training/label_2")
-BASE_DIR = Path("/home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar/default/pointpillar/default/eval/epoch_80/val/default/final_result/data")
-IMP_DIR = Path("/home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar/diou_loss_6/pointpillar/v7_diou_eval/eval/epoch_80/val/default/final_result/data")
+BASE_DIR = Path("/home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar/diou_loss_6/pointpillar/v7_diou_eval/eval/epoch_80/val/default/final_result/data")
+IMP_DIR = Path("/home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar_mobile_diou_aug_v1/mobile_diou_aug_v1/pointpillar_mobile_diou_aug_v1/v7_diou_mobilenet_best_eval/eval/epoch_80/val/default/final_result/data")
+
+# base dir: /home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar/baseline_real_gpu2_batch4/pointpillar/default/eval/epoch_80/val/baseline_bs8_vis/final_result/data
+# Improved dir: /home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar/diou_loss_6/pointpillar/v7_diou_eval/eval/epoch_80/val/default/final_result/data
+# best dir: /home/cv10f26/Group10/PointPillars/OpenPCDet/output/output/kitti_models/pointpillar_mobile_diou_aug_v1/mobile_diou_aug_v1/pointpillar_mobile_diou_aug_v1/v7_diou_mobilenet_best_eval/eval/epoch_80/val/default/final_result/data
 
 CLASSES = ["Car", "Pedestrian", "Cyclist"]
-SCORE_TH = 0.3
+SCORE_TH = 0.5
 
 
 def read_gt(path):
