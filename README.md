@@ -391,7 +391,16 @@ For a stricter future study, each major variant should be trained with multiple 
 
 ---
 
-## 15. Notes for Evaluators
+## 15. Authors and Contributions
+- **Zhenwei Zhang**: led the overall OpenPCDet-based PointPillars experimental framework, later-stage model optimization, core loss-function improvement, final analysis, visualization, and final report revision. Zhenwei supported the early V1--V4 PointPillars ablations and then mainly led the later optimization stages, including naive DIoU, DIoU weight tuning, class-decoupled DIoU, MobileBEVBackbone, augmentation experiments, parameter and inference-time analysis, qualitative visualization, result verification, and final report formatting and polishing.
+
+- **Qi Fan Andrea Pan**: contributed to advanced-model benchmarking and early-stage PointPillars ablation experiments. Qi Fan worked on both TANet and CenterPoint training/evaluation, which provided important comparison baselines for model selection. Qi Fan also contributed to the implementation and testing of the early PointPillars variants from V1 to V4, including the initial SiLU, PillarSE, and CBAM-related ablation experiments.
+
+- **Shuveccha Barua**: assisted with the early TANet exploration together with Qi Fan and contributed an initial data augmentation idea for the project. Shuveccha also contributed to the early report drafting process, including background writing, report organization, and formatting support.
+
+---
+
+## 16. Notes for Evaluators
 
 This repository is intended to show the implementation and experimental workflow. It does not include trained model weights or the KITTI dataset.
 
