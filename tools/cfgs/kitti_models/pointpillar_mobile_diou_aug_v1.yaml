@@ -20,6 +20,7 @@ DATA_CONFIG:
             'train': 16000,
             'test': 40000
           }
+
     DATA_AUGMENTOR:
         DISABLE_AUG_LIST: ['placeholder']
         AUG_CONFIG_LIST:
@@ -28,11 +29,10 @@ DATA_CONFIG:
               DB_INFO_PATH:
                   - kitti_dbinfos_train.pkl
               PREPARE: {
-                 filter_by_min_points: ['Car:5', 'Pedestrian:5', 'Cyclist:5'],
-                 filter_by_difficulty: [-1],
+                  filter_by_min_points: ['Car:5', 'Pedestrian:5', 'Cyclist:5'],
+                  filter_by_difficulty: [-1],
               }
-
-              SAMPLE_GROUPS: ['Car:15','Pedestrian:15', 'Cyclist:15']
+              SAMPLE_GROUPS: ['Car:15', 'Pedestrian:15', 'Cyclist:15']
               NUM_POINT_FEATURES: 4
               DATABASE_WITH_FAKELIDAR: False
               REMOVE_EXTRA_WIDTH: [0.0, 0.0, 0.0]
@@ -40,6 +40,9 @@ DATA_CONFIG:
 
             - NAME: random_world_flip
               ALONG_AXIS_LIST: ['x']
+
+            - NAME: random_world_translation
+              NOISE_TRANSLATE_STD: [0.2, 0.2, 0.0]
 
             - NAME: random_world_rotation
               WORLD_ROT_ANGLE: [-0.78539816, 0.78539816]

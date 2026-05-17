@@ -194,7 +194,74 @@ class AnchorHeadTemplate(nn.Module):
         tb_dict = {
             'rpn_loss_loc': loc_loss.item()
         }
+        
+        
+        
+        # # ==========================================
+        # # ✨ 修复版：融合 3D DIoU 辅助几何损失
+        # # ==========================================
+        # if self.model_cfg.LOSS_CONFIG.get('USE_DIOU', False):
+        #     diou_calculator = loss_utils.IouRegLossSparse(type="DIoU")
+            
+        #     decoded_box_preds = self.box_coder.decode_torch(box_preds, anchors)
+        #     decoded_box_targets = self.box_coder.decode_torch(box_reg_targets, anchors)
+            
+        #     pos_decoded_preds = decoded_box_preds[positives]
+        #     pos_decoded_targets = decoded_box_targets[positives]
+            
+        #     if pos_decoded_preds.shape[0] > 0:
+        #         iou = diou_calculator.bbox3d_iou_func(pos_decoded_preds, pos_decoded_targets)
+                
+        #         # 💥 核心修复：提取属于正样本的权重（该权重已经被 pos_normalizer 归一化过）
+        #         # reg_weights 的 shape 是 [batch_size, num_anchors]
+        #         # positives 是 bool mask, 过滤后 pos_weights 的 shape 刚好匹配 iou 的长度
+        #         pos_weights = reg_weights[positives] 
+                
+        #         # 💥 核心修复：将权重乘上去，保证 DIoU 和 L1 处于同一量级
+        #         diou_loss = ((1.0 - iou) * pos_weights).sum() / batch_size
+                
+        #         diou_weight = self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS.get('diou_weight', 0.1)
+                
+        #         box_loss += diou_loss * diou_weight
+        #         tb_dict['rpn_loss_diou'] = diou_loss.item()
+        # # ==========================================
 
+
+        # ==========================================
+        # ✨ 终极版：融合 3D DIoU 辅助几何损失 (类别解耦)
+        # ==========================================
+        if self.model_cfg.LOSS_CONFIG.get('USE_DIOU', False):
+            diou_calculator = loss_utils.IouRegLossSparse(type="DIoU")
+            
+            decoded_box_preds = self.box_coder.decode_torch(box_preds, anchors)
+            decoded_box_targets = self.box_coder.decode_torch(box_reg_targets, anchors)
+            
+            pos_decoded_preds = decoded_box_preds[positives]
+            pos_decoded_targets = decoded_box_targets[positives]
+            
+            if pos_decoded_preds.shape[0] > 0:
+                iou = diou_calculator.bbox3d_iou_func(pos_decoded_preds, pos_decoded_targets)
+                pos_weights = reg_weights[positives] 
+                
+                # 1. 获取正样本的具体类别标签
+                pos_labels = box_cls_labels[positives] 
+                
+                # 2. 从 YAML 读取刚才定义的 [0.05, 0.2, 0.05] 列表
+                class_diou_weights = self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['diou_weight']
+                
+                # 3. 动态分配权重掩码
+                diou_weight_mask = torch.zeros_like(pos_labels, dtype=torch.float32)
+                diou_weight_mask[pos_labels == 1] = class_diou_weights[0]  # Car
+                diou_weight_mask[pos_labels == 2] = class_diou_weights[1]  # Pedestrian
+                diou_weight_mask[pos_labels == 3] = class_diou_weights[2]  # Cyclist
+                
+                # 4. 计算并累加损失，注意不再乘以全局 diou_weight
+                diou_loss = ((1.0 - iou) * pos_weights * diou_weight_mask).sum() / batch_size
+                
+                box_loss += diou_loss
+                tb_dict['rpn_loss_diou'] = diou_loss.item()
+        
+    
         if box_dir_cls_preds is not None:
             dir_targets = self.get_direction_target(
                 anchors, box_reg_targets,

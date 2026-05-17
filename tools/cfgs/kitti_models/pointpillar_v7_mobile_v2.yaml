@@ -62,13 +62,14 @@ MODEL:
         NUM_BEV_FEATURES: 64
 
     BACKBONE_2D:
-        # NAME: BaseBEVBackbone
-        NAME: MobileBEVBackbone # ✨ 新增：使用轻量级 MobileBEVBackbone
+        NAME: MobileBEVBackboneV2
         LAYER_NUMS: [3, 5, 5]
         LAYER_STRIDES: [2, 2, 2]
         NUM_FILTERS: [64, 128, 256]
         UPSAMPLE_STRIDES: [1, 2, 4]
         NUM_UPSAMPLE_FILTERS: [128, 128, 128]
+        EXPAND_RATIO: 2
+        ACT_FN: SiLU
 
     DENSE_HEAD:
         NAME: AnchorHeadSingle
